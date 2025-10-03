@@ -51,7 +51,7 @@ namespace ii.DragonPiece
             }
             var textLength = reader.ReadInt32();
             var textBlock = reader.ReadBytes(textLength * 2);
-            var text1 = Encoding.Unicode.GetString(textBlock );
+            var text1 = Encoding.Unicode.GetString(textBlock);
             _ = reader.ReadByte();
             textLength = reader.ReadInt32();
             textBlock = reader.ReadBytes(textLength * 2);
@@ -62,7 +62,7 @@ namespace ii.DragonPiece
             // -------------------------------------------------------
             // Unknown data
             // -------------------------------------------------------
-            reader.BaseStream.Seek(unknownDataOffset, SeekOrigin.Begin); 
+            reader.BaseStream.Seek(unknownDataOffset, SeekOrigin.Begin);
 
             // -------------------------------------------------------
             // Symbolic names
@@ -77,66 +77,105 @@ namespace ii.DragonPiece
             // -------------------------------------------------------
             // Filenames
             // -------------------------------------------------------
-            reader.BaseStream.Seek(filenameOffset, SeekOrigin.Begin);
-            var entryCount = reader.ReadInt32();
-            var entryCount2 = reader.ReadInt32();
-
-            var i = 0;
-            try
+            if (miscDataOffset - filenameOffset > 28)
             {
-                var amt = 20;
+                reader.BaseStream.Seek(filenameOffset, SeekOrigin.Begin);
+                var entryCount = reader.ReadInt32();
+                var entryCount2 = reader.ReadInt32();
 
-                if (filename.ToLower().Contains("speechfx") || filename.ToLower().Contains("text") || filename.ToLower().Contains("levels"))
+                var i = 0;
+                byte resourceType = 0;
+                try
                 {
-                    amt = 20;
-                }
-                if (filename.ToLower().Contains("projectiles") || filename.ToLower().Contains("skyboxes"))
-                {
-                    amt = 24;
-                }
-                if (filename.ToLower().Contains("fonts"))
-                {
-                    amt = 16;
-                }
-                if (filename.ToLower().Contains("actors"))
-                {
-                    amt = 28;
-                }
+                    var amt = 20;
 
-                for (i = 0; i < entryCount2; i++)
-                {
-                    var fileId = reader.ReadInt32();
-                    var cnt = reader.ReadByte();
-                    if (cnt == 0)
+                    if (filename.ToLower().Contains("speechfx") || filename.ToLower().Contains("text") || filename.ToLower().Contains("levels") || filename.ToLower().Contains("dialog"))
                     {
-                        continue;
+                        amt = 20;
+                    }
+                    if (filename.ToLower().Contains("projectiles") || filename.ToLower().Contains("skyboxes"))
+                    {
+                        amt = 24;
+                    }
+                    if (filename.ToLower().Contains("fonts"))
+                    {
+                        amt = 16;
+                    }
+                    if (filename.ToLower().Contains("actors"))
+                    {
+                        amt = 28;
                     }
 
-                    if (cnt == 1)
+                    for (i = 0; i < entryCount2; i++)
                     {
-                        _ = reader.ReadByte();
-                        var length = reader.ReadInt32();
-                        if (length == 0)
+                        var fileId = reader.ReadInt32();
+                        var cnt = reader.ReadByte();
+                        if (cnt == 0)
                         {
-                            _ = reader.ReadInt32();
+                            continue;
                         }
-                        else
+
+                        if (cnt == 1)
                         {
-                            var thisfilename = Encoding.Unicode.GetString(reader.ReadBytes(length * 2)).TrimEnd('\0');
-                            var fileEntry = new LqrFileEntry
+                            var rtHandled = false;
+
+                            resourceType = reader.ReadByte();
+                            if (resourceType == 0)
                             {
-                                FileId = fileId,
-                                Filename = thisfilename + "_" + Convert.ToString(reader.BaseStream.Position)
-                            };
-                            result.FileEntries.Add(fileEntry);
-                            _ = reader.ReadBytes(amt);
+                                rtHandled = true;
+                                var length = reader.ReadInt32();
+                                if (length == 0)
+                                {
+                                    _ = reader.ReadInt32();
+                                }
+                                else
+                                {
+                                    var thisfilename = Encoding.Unicode.GetString(reader.ReadBytes(length * 2)).TrimEnd('\0');
+                                    var fileEntry = new LqrFileEntry
+                                    {
+                                        FileId = fileId,
+                                        Filename = thisfilename + "_" + Convert.ToString(reader.BaseStream.Position)
+                                    };
+                                    result.FileEntries.Add(fileEntry);
+                                    reader.ReadBytes(amt);
+                                }
+                            }
+                            else
+                            //if (resourceType == 10 || resourceType == 11 || resourceType == 12 || resourceType == 13 || resourceType == 14 || resourceType == 19 || resourceType == 20 ||
+                            //resourceType == 23 || resourceType == 25 || resourceType == 35 || resourceType == 39 || resourceType == 51 || resourceType == 57 || resourceType == 60 ||
+                            //resourceType == 64 || resourceType == 66 || resourceType == 1 || resourceType == 44 || resourceType == 34 || resourceType == 24 || resourceType == 126 || true)
+                            {
+                                rtHandled = true;
+                                _ = reader.ReadInt32();
+                                _ = reader.ReadInt32();
+                                var length = reader.ReadInt32();
+                                if (length == 0)
+                                {
+                                    _ = reader.ReadInt32();
+                                }
+                                else
+                                {
+                                    var thisfilename = Encoding.Unicode.GetString(reader.ReadBytes(length * 2)).TrimEnd('\0');
+                                    var fileEntry = new LqrFileEntry
+                                    {
+                                        FileId = fileId,
+                                        Filename = thisfilename + "_" + Convert.ToString(reader.BaseStream.Position)
+                                    };
+                                    result.FileEntries.Add(fileEntry);
+                                    reader.ReadBytes(amt);
+                                }
+                            }
+
+                            if (!rtHandled)
+                                Console.WriteLine(resourceType);
+
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                return null;
+                catch (Exception ex)
+                {
+                    return null;
+                }
             }
             return result;
         }
