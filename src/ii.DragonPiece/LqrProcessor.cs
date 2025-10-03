@@ -23,7 +23,12 @@ namespace ii.DragonPiece
             using var fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
             using var reader = new BinaryReader(fileStream);
 
-            var signature = reader.ReadBytes(4);
+            var signature = reader.ReadInt32();
+            if (signature != 108)
+            {
+                throw new InvalidDataException($"Invalid LQR signature: {signature}.");
+            }
+
             var checksum = reader.ReadInt32(); // ?
             var valueOffset = reader.ReadInt64();
             var miscDataOffset = reader.ReadInt64();
@@ -134,7 +139,8 @@ namespace ii.DragonPiece
                                     var fileEntry = new LqrFileEntry
                                     {
                                         FileId = fileId,
-                                        Filename = thisfilename + "_" + Convert.ToString(reader.BaseStream.Position)
+                                        //Filename = thisfilename + "_" + Convert.ToString(reader.BaseStream.Position)
+                                        Filename = thisfilename
                                     };
                                     result.FileEntries.Add(fileEntry);
                                     reader.ReadBytes(amt);
@@ -159,7 +165,8 @@ namespace ii.DragonPiece
                                     var fileEntry = new LqrFileEntry
                                     {
                                         FileId = fileId,
-                                        Filename = thisfilename + "_" + Convert.ToString(reader.BaseStream.Position)
+                                        //Filename = thisfilename + "_" + Convert.ToString(reader.BaseStream.Position)
+                                        Filename = thisfilename
                                     };
                                     result.FileEntries.Add(fileEntry);
                                     reader.ReadBytes(amt);

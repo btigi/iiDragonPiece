@@ -6,8 +6,9 @@ iiDragonPiece is a C# library supporting the modification of files relating to D
 
 | Name          | Read | Write | Comment |
 |---------------|:----:|-------|:--------|
+| BIK           | ✗    |   ✗   | Movies
 | DGN           | ✗    |   ✗   | Levels
-| H2O           | ✗    |   ✗   | Archive
+| H2O           | 〰️   |   ✗   | Archive
 | LCR           | ✗    |   ✗   | Cursors
 | LFX           | ✗    |   ✗   | Effects
 | LMD           | ✗    |   ✗   | Models
